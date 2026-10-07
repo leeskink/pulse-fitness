@@ -17,14 +17,18 @@ body {
 header {
     background: #111;
     color: white;
-    padding: 20px 40px;
+    padding: 20px 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 header h1 {
     font-size: 28px;
+    letter-spacing: 1px;
 }
 
 /* Navigation */
@@ -52,23 +56,27 @@ section {
 
 /* Home */
 #home {
-    min-height: 500px;
+    min-height: 600px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
+    padding: 80px 20px;
 }
 
 #home h2 {
-    font-size: 48px;
+    font-size: 56px;
+    margin-bottom: 800px;
     margin-bottom: 20px;
+    line-height: 1.1;
 }
 
 #home p {
-    max-width: 600px;
-    margin-bottom: 30px;
-    font-size: 18px;
+    max-width: 650px;
+    margin-bottom: 35px;
+    font-size: 20px;
+    color: #555;
 }
 
 /* Buttons */
@@ -89,21 +97,42 @@ button:hover {
 /* Workouts */
 #workouts {
     text-align: center;
+    background: #f4f4f4;
 }
 
 #workouts h2 {
-    font-size: 36px;
-    margin-bottom: 40px;
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+.workout-container {
+    display: grind;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 40px;
 }
 
-#workouts > div {
+
+.workout-card{
     background: white;
-    padding: 25px;
-    margin: 15px auto;
-    max-width: 700px;
-    border-radius: 8px;
-}
+    padding: 40px 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transition: tranform 0.3s ease, box-shadow 0.3s ease;
 
+}
+ #workouts > div:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+ }
+
+ #workouts h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+ }
+ #workouts p {
+    color: #666;
+    font-size: 16px;
+ }
 /* About */
 #about {
     text-align: center;
@@ -163,5 +192,8 @@ footer {
 
     #home h2 {
         font-size: 36px;
+    }
+    .workout-container {
+        grid-template-columns: 1fr;
     }
 }
