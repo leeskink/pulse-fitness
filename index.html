@@ -1,63 +1,622 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pulse Fitness </title>
+
+    <title>Pulse Fitness | Train Better. Live Better.</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <header>
-          <h1>Pulse Fitness</h1>
+    <!-- =========================
+         HEADER
+    ========================== -->
 
-          <nav>
+    <header class="site-header">
+
+        <div class="logo">
+            <span>Pulse</span> Fitness
+        </div>
+
+        <nav class="main-nav">
             <a href="#home">Home</a>
             <a href="#workouts">Workouts</a>
             <a href="#about">About</a>
+            <a href="#trainers">Trainers</a>
+            <a href="#membership">Membership</a>
             <a href="#contact">Contact</a>
+        </nav>
 
-          </nav>
+        <!-- Country Selector -->
+        <div class="country-selector">
+
+            <button class="country-button" type="button">
+                🌍 UAE
+                <span>▼</span>
+            </button>
+
+            <div class="country-menu">
+
+                <a href="#" data-country="UAE">
+                    🇦🇪 United Arab Emirates
+                </a>
+
+                <a href="#" data-country="UK">
+                    🇬🇧 United Kingdom
+                </a>
+
+                <a href="#" data-country="USA">
+                    🇺🇸 United States
+                </a>
+
+                <a href="#" data-country="South Africa">
+                    🇿🇦 South Africa
+                </a>
+
+                <a href="#" data-country="Cyprus">
+                    🇨🇾 Cyprus
+                </a>
+
+                <a href="#" data-country="Turkey">
+                    🇹🇷 Turkey
+                </a>
+
+            </div>
+
+        </div>
 
     </header>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+
     <main>
-        
-        <section id="home">
-            <h2>Train Hard. Stay Strong.</h2>
-            <p>
-                welcome to Pulse Fitness - your place to build strength, improve fitness and reach your goals.
-            </p>
 
-            <button>Get Started</button>
-        </section>
+        <!-- HERO SLIDER -->
 
-        <section id="workouts">
-            <h2>Our Workouts</h2>  
+        <section id="home" class="hero">
 
-            <div class=" workout-container">
-                <div class="workout-container">
-                    
+            <!-- Slide 1 -->
+
+            <div class="hero-slide active">
+
+                <div class="hero-content">
+
+                    <p class="hero-label">
+                        PULSE FITNESS
+                    </p>
+
+                    <h1>
+                        Train Better.<br>
+                        Live Better.
+                    </h1>
+
+                    <p class="hero-text">
+                        Push your limits, build your strength,
+                        and become the strongest version of yourself.
+                    </p>
+
+                    <a href="#membership" class="hero-button">
+                        Join Now
+                    </a>
+
                 </div>
+
             </div>
-        </section>
+
+
+            <!-- Slide 2 -->
+
+            <div class="hero-slide">
+
+                <div class="hero-content">
+
+                    <p class="hero-label">
+                        PERFORMANCE
+                    </p>
+
+                    <h1>
+                        Start Strong.<br>
+                        Stay Strong.
+                    </h1>
+
+                    <p class="hero-text">
+                        Professional training designed to help
+                        you achieve your fitness goals.
+                    </p>
+
+                    <a href="#workouts" class="hero-button">
+                        View Workouts
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Slide 3 -->
+
+            <div class="hero-slide">
+
+                <div class="hero-content">
+
+                    <p class="hero-label">
+                        YOUR FITNESS JOURNEY
+                    </p>
+
+                    <h1>
+                        More Than A Gym.<br>
+                        A Lifestyle.
+                    </h1>
+
+                    <p class="hero-text">
+                        Train with purpose. Live with confidence.
+                        Become part of the Pulse community.
+                    </p>
+
+                    <a href="#about" class="hero-button">
+                        Discover Pulse
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Slider Controls -->
+
+            <div class="slider-controls">
+
+                <button
+                    class="slider-dot active"
+                    type="button"
+                    aria-label="Go to slide 1">
+                </button>
+
+                <button
+                    class="slider-dot"
+                    type="button"
+                    aria-label="Go to slide 2">
+                </button>
+
+                <button
+                    class="slider-dot"
+                    type="button"
+                    aria-label="Go to slide 3">
+                </button>
+
+            </div>
+
         </section>
 
 
-          <section id="contact">
-               <h2>Contact Us</h2>
-               <form>
-                <input type="text" placeholder="Your Name">
-                <input type="email" placeholder="Your Email">
-                <textarea placeholder="Your Message"></textarea>
-                <button type="submit">Send Message</button>
-               </form>
-          </section>
+        <!-- =========================
+             WORKOUTS
+        ========================== -->
+
+        <section id="workouts" class="workouts">
+
+            <div class="section-heading">
+
+                <p class="section-label">
+                    TRAIN WITH PURPOSE
+                </p>
+
+                <h2>
+                    Our Workouts
+                </h2>
+
+                <p>
+                    Training programs designed for every level
+                    of your fitness journey.
+                </p>
+
+            </div>
+
+
+            <div class="workout-container">
+
+                <article class="workout-card">
+
+                    <div class="workout-icon">
+                        💪
+                    </div>
+
+                    <h3>
+                        Strength Training
+                    </h3>
+
+                    <p>
+                        Build muscle, increase strength,
+                        and improve your overall performance.
+                    </p>
+
+                    <a href="#">
+                        Learn More →
+                    </a>
+
+                </article>
+
+
+                <article class="workout-card">
+
+                    <div class="workout-icon">
+                        🏃
+                    </div>
+
+                    <h3>
+                        Cardio Training
+                    </h3>
+
+                    <p>
+                        Improve your endurance, stamina,
+                        and cardiovascular fitness.
+                    </p>
+
+                    <a href="#">
+                        Learn More →
+                    </a>
+
+                </article>
+
+
+                <article class="workout-card">
+
+                    <div class="workout-icon">
+                        🔥
+                    </div>
+
+                    <h3>
+                        HIIT Training
+                    </h3>
+
+                    <p>
+                        High-intensity workouts that challenge
+                        your body and push your limits.
+                    </p>
+
+                    <a href="#">
+                        Learn More →
+                    </a>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             ABOUT
+        ========================== -->
+
+        <section id="about" class="about">
+
+            <div class="about-content">
+
+                <p class="section-label">
+                    ABOUT PULSE FITNESS
+                </p>
+
+                <h2>
+                    Stronger Every Day.
+                </h2>
+
+                <p>
+                    Pulse Fitness is more than a gym.
+                    It's a community built around strength,
+                    discipline, confidence, and progress.
+                </p>
+
+                <p>
+                    Whether you're starting your fitness journey
+                    or looking to reach the next level,
+                    our programs are designed to help you
+                    perform at your best.
+                </p>
+
+                <a href="#contact" class="secondary-button">
+                    Learn More
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             TRAINERS
+        ========================== -->
+
+        <section id="trainers" class="trainers">
+
+            <div class="section-heading">
+
+                <p class="section-label">
+                    EXPERT COACHING
+                </p>
+
+                <h2>
+                    Meet Our Trainers
+                </h2>
+
+                <p>
+                    Experienced professionals ready to help
+                    you reach your goals.
+                </p>
+
+            </div>
+
+
+            <div class="trainer-container">
+
+                <article class="trainer-card">
+
+                    <div class="trainer-image">
+                        <span>Trainer 01</span>
+                    </div>
+
+                    <h3>
+                        Alex Morgan
+                    </h3>
+
+                    <p>
+                        Strength & Conditioning Coach
+                    </p>
+
+                </article>
+
+
+                <article class="trainer-card">
+
+                    <div class="trainer-image">
+                        <span>Trainer 02</span>
+                    </div>
+
+                    <h3>
+                        Sarah Williams
+                    </h3>
+
+                    <p>
+                        Fitness & Nutrition Coach
+                    </p>
+
+                </article>
+
+
+                <article class="trainer-card">
+
+                    <div class="trainer-image">
+                        <span>Trainer 03</span>
+                    </div>
+
+                    <h3>
+                        Daniel Carter
+                    </h3>
+
+                    <p>
+                        HIIT & Performance Coach
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             MEMBERSHIP
+        ========================== -->
+
+        <section id="membership" class="membership">
+
+            <div class="section-heading">
+
+                <p class="section-label">
+                    MEMBERSHIP
+                </p>
+
+                <h2>
+                    Choose Your Plan
+                </h2>
+
+                <p>
+                    Find the membership that fits your goals.
+                </p>
+
+            </div>
+
+
+            <div class="membership-container">
+
+                <article class="membership-card">
+
+                    <h3>
+                        Basic
+                    </h3>
+
+                    <p class="price">
+                        AED 199
+                        <span>/ month</span>
+                    </p>
+
+                    <ul>
+                        <li>Gym Access</li>
+                        <li>Locker Access</li>
+                        <li>Free Fitness Assessment</li>
+                    </ul>
+
+                    <a href="#contact">
+                        Choose Plan
+                    </a>
+
+                </article>
+
+
+                <article class="membership-card featured">
+
+                    <p class="popular">
+                        MOST POPULAR
+                    </p>
+
+                    <h3>
+                        Pro
+                    </h3>
+
+                    <p class="price">
+                        AED 299
+                        <span>/ month</span>
+                    </p>
+
+                    <ul>
+                        <li>Unlimited Gym Access</li>
+                        <li>Group Classes</li>
+                        <li>Fitness Assessment</li>
+                        <li>Personal Training Session</li>
+                    </ul>
+
+                    <a href="#contact">
+                        Choose Plan
+                    </a>
+
+                </article>
+
+
+                <article class="membership-card">
+
+                    <h3>
+                        Elite
+                    </h3>
+
+                    <p class="price">
+                        AED 499
+                        <span>/ month</span>
+                    </p>
+
+                    <ul>
+                        <li>Unlimited Gym Access</li>
+                        <li>All Group Classes</li>
+                        <li>Personal Training</li>
+                        <li>Nutrition Guidance</li>
+                    </ul>
+
+                    <a href="#contact">
+                        Choose Plan
+                    </a>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             CONTACT
+        ========================== -->
+
+        <section id="contact" class="contact">
+
+            <div class="section-heading">
+
+                <p class="section-label">
+                    GET IN TOUCH
+                </p>
+
+                <h2>
+                    Start Your Journey
+                </h2>
+
+                <p>
+                    Have a question? Contact the Pulse Fitness team.
+                </p>
+
+            </div>
+
+
+            <form>
+
+                <label for="name">
+                    Your Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Enter your name"
+                    required
+                >
+
+
+                <label for="email">
+                    Your Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label for="message">
+                    Your Message
+                </label>
+
+                <textarea
+                    id="message"
+                    name="message"
+                    placeholder="How can we help?"
+                    rows="6"
+                    required
+                ></textarea>
+
+
+                <button type="submit">
+                    Send Message
+                </button>
+
+            </form>
+
+        </section>
 
     </main>
 
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
     <footer>
-        <p>&copy; 2026 Pulse Fitness. All rights reserved.</p>
+
+        <div class="footer-logo">
+            Pulse Fitness
+        </div>
+
+        <p>
+            Train Better. Live Better.
+        </p>
+
+        <p>
+            &copy; 2026 Pulse Fitness.
+            All rights reserved.
+        </p>
+
     </footer>
-    
+
+
+    <script src="script.js"></script>
+
 </body>
+
 </html>
