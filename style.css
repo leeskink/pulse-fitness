@@ -181,9 +181,9 @@ textarea {
 .hero {
     position: relative;
 
-    height: calc(100vh - 80px);
+    height: calc(100vh - 90px);
 
-    min-height: 600px;
+    min-height: 500px;
 
     overflow: hidden;
 
@@ -272,7 +272,7 @@ textarea {
     color: #e30613;
 
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 900;
 
     letter-spacing: 3px;
 
@@ -282,9 +282,9 @@ textarea {
 .hero-content h1 {
     font-size: clamp(50px, 7vw, 92px);
 
-    line-height: 0.98;
+    line-height: 1;
 
-    font-weight: 900;
+    font-weight: 600;
 
     letter-spacing: -3px;
 
@@ -959,4 +959,44 @@ footer p {
         height: 380px;
     }
 
+}
+
+
+/* HERO VIDEO BACKGROUND */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hero-slide {
+    background: transparent !important;
+    z-index: 2;
+}
+
+.slider-controls {
+    position: relative;
+    z-index: 3;
 }
