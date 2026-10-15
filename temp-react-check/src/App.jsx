@@ -13,18 +13,37 @@ function Header() {
   )
 }
 
+
 function Hero() {
   return (
     <section className="hero" id="home">
-      <p>YOUR FITNESS. YOUR FUTURE.</p>
-      <h1>BUILD YOUR<br />BEST SELF.</h1>
-      <p>Train harder. Get stronger. Become unstoppable.</p>
-      <a className="button" href="#programs">
-        Explore Programs
-      </a>
+      <video
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      >
+        <source src="/gymvid.mp4" type="video/mp4" />
+      </video>
+
+      <div className="hero-content">
+        <p>YOUR FITNESS. YOUR FUTURE.</p>
+        <h1>
+          BUILD YOUR
+          <br />
+          BEST SELF.
+        </h1>
+        <p>Train harder. Get stronger. Become unstoppable.</p>
+        <a className="button" href="#programs">
+          Explore Programs
+        </a>
+      </div>
     </section>
   )
 }
+
 
 function Programs() {
 return ( <section className="programs" id="programs"> <p>OUR TRAINING</p> <h2>CHOOSE YOUR PROGRAM</h2>
