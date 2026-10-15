@@ -52,6 +52,20 @@ return ( <section className="programs" id="programs"> <p>OUR TRAINING</p> <h2>CH
 );
 }
 
+function Contact() {
+return ( <section className="contact" id="contact"> <p>READY TO START?</p> <h2>TAKE THE FIRST STEP.</h2> <p>
+Your fitness journey starts here. Train with purpose and
+work towards becoming your strongest self. </p> <a className="button" href="mailto:info@pulsefitness.com">
+Contact Us </a> </section>
+)
+}
+
+function Footer() {
+return ( <footer className="footer"> <h3>PULSE FITNESS</h3> <p>Build your best self. One workout at a time.</p> <p>© {new Date().getFullYear()} Pulse Fitness. All rights reserved.</p> </footer>
+)
+}
+
+
 
 
 function App() {
@@ -60,6 +74,8 @@ function App() {
       <Header />
       <Hero />
       <Programs />
+      <Contact />
+      <Footer />
     </>
   )
 }

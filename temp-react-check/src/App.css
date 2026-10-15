@@ -132,3 +132,44 @@ grid-template-columns: 1fr;
 font-size: 28px;
 }
 }
+
+.contact {
+padding: 80px 20px;
+text-align: center;
+background: #151515;
+}
+
+.contact > p:first-child {
+color: #ff453a;
+font-weight: bold;
+letter-spacing: 2px;
+}
+
+.contact h2 {
+font-size: 32px;
+margin: 15px 0;
+}
+
+.contact p {
+max-width: 600px;
+margin: 15px auto;
+line-height: 1.7;
+}
+
+.footer {
+padding: 35px 20px;
+text-align: center;
+background: #080808;
+border-top: 1px solid #333;
+}
+
+.footer h3 {
+color: #ff453a;
+letter-spacing: 2px;
+}
+
+.footer p {
+color: #aaa;
+font-size: 14px;
+line-height: 1.6;
+}
