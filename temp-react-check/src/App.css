@@ -68,3 +68,67 @@ nav a {
   font-weight: bold;
   border-radius: 4px;
 }
+
+/* Programs section */
+.programs {
+padding: 80px 8%;
+background-color: #111111;
+color: #ffffff;
+text-align: center;
+}
+
+.programs > p {
+color: #ff3b30;
+font-size: 14px;
+font-weight: bold;
+letter-spacing: 3px;
+margin-bottom: 12px;
+}
+
+.programs h2 {
+font-size: 36px;
+margin-bottom: 40px;
+}
+
+/* Arrange program cards in columns */
+.program-list {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 24px;
+}
+
+/* Individual program cards */
+.program-card {
+background-color: #1c1c1c;
+border: 1px solid #333333;
+border-radius: 12px;
+padding: 30px 24px;
+transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.program-card:hover {
+transform: translateY(-6px);
+border-color: #ff3b30;
+}
+
+.program-card h3 {
+color: #ff3b30;
+font-size: 21px;
+margin-bottom: 15px;
+}
+
+.program-card p {
+color: #cccccc;
+line-height: 1.7;
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 768px) {
+.program-list {
+grid-template-columns: 1fr;
+}
+
+.programs h2 {
+font-size: 28px;
+}
+}
