@@ -4,10 +4,12 @@ import { trainers } from './data/trainers'
 import { classes } from './data/classes'
 import { memberships } from './data/membership'
 import { schedule } from './data/schedule'
+import AdminDashboard from "./components/AdminDashboard";
 
 
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Auth from './components/Auth'
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -16,7 +18,7 @@ function Header() {
     { label: 'Home', href: '#home' },
     { label: 'Programs', href: '#programs' },
     { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Contact', href:"#auth" },
   ]
 
   return (
@@ -750,10 +752,59 @@ function Footer() {
   )
 }
 
+
+
 function App() {
+  const [user, setUser] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/auth/me",
+          { credentials: "include" }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Could not check login session:", error);
+      } finally {
+        setCheckingSession(false);
+      }
+    }
+
+    checkSession();
+  }, []);
+
+  async function handleLogout() {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/auth/logout",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Could not log out:", error);
+    }
+  }
+  if (window.location.pathname === "/admin") {
+  return <AdminDashboard />;
+}
+
   return (
     <>
       <Header />
+
       <main>
         <Hero />
         <Programs />
@@ -763,10 +814,40 @@ function App() {
         <Membership />
         <About />
         <Contact />
+
+        <div id="auth">
+          {checkingSession ? (
+            <p className="bg-black py-10 text-center text-white">
+              Checking your account...
+            </p>
+          ) : user ? (
+            <section className="bg-black px-6 py-16 text-center text-white">
+              <h2 className="text-3xl font-black">
+                Welcome, {user.fullName}!
+              </h2>
+
+              <p className="mt-3 text-gray-400">{user.email}</p>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-6 rounded-lg bg-red-600 px-6 py-3 font-bold hover:bg-red-700"
+              >
+                Log Out
+              </button>
+            </section>
+          ) : (
+            <Auth onLogin={setUser} />
+          )}
+        </div>
       </main>
+
       <Footer />
     </>
-  )
+  );
 }
+
+
+
 
 export default App

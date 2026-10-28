@@ -1,4 +1,4 @@
-
+import { useState } from 'react'
 import { programs } from './data/programs'
 import { trainers } from './data/trainers'
 import { classes } from './data/classes'
@@ -6,37 +6,96 @@ import { memberships } from './data/membership'
 import { schedule } from './data/schedule'
 
 
+
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const navLinks = [
+    { label: 'Home', href: '#home' },
+    { label: 'Programs', href: '#programs' },
+    { label: 'Trainers', href: '#trainers' },
+    { label: 'Classes', href: '#classes' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#contact' },
+  ]
+
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 px-6 text-white backdrop-blur-lg md:px-12">
-      <div className="mx-auto flex max-w-7xl items-center justify-between py-5">
-        <a href="#home" className="text-xl font-black tracking-wider sm:text-2xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/90 text-white shadow-lg shadow-black/20 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+        <a
+          href="#home"
+          className="shrink-0 text-xl font-black tracking-tight sm:text-2xl"
+          aria-label="Pulse Fitness home"
+        >
           PULSE<span className="text-red-500">.</span> FITNESS
         </a>
 
-        <nav className="hidden items-center gap-8 text-sm font-semibold md:flex">
-          <a className="transition hover:text-red-500" href="#home">Home</a>
-          <a className="transition hover:text-red-500" href="#programs">Programs</a>
-          <a className="transition hover:text-red-500" href="#about">About</a>
-          <a className="transition hover:text-red-500" href="#contact">Contact</a>
+        <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm font-semibold text-gray-300 transition-colors duration-200 hover:text-red-500"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
-        <a
-          href="#contact"
-          className="rounded-md bg-red-600 px-4 py-3 text-xs font-extrabold uppercase tracking-wide transition hover:bg-red-700 sm:px-5"
-        >
-          Join Now <span aria-hidden="true">↗️</span>
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href="#membership"
+            className="hidden rounded-md bg-red-600 px-5 py-3 text-xs font-extrabold uppercase tracking-wide transition hover:bg-red-700 sm:inline-flex"
+          >
+            Join Now <span className="ml-2" aria-hidden="true">↗</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-white/15 text-xl transition hover:border-red-500 hover:text-red-400 lg:hidden"
+            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? '×' : '☰'}
+          </button>
+        </div>
       </div>
+
+      {menuOpen && (
+        <nav className="border-t border-white/10 bg-zinc-950 px-5 py-4 lg:hidden">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-md px-4 py-3 text-sm font-semibold text-gray-300 transition hover:bg-white/5 hover:text-red-400"
+              >
+                {link.label}
+              </a>
+            ))}
+
+            <a
+              href="#membership"
+              onClick={() => setMenuOpen(false)}
+              className="mt-2 rounded-md bg-red-600 px-4 py-3 text-center text-sm font-extrabold uppercase hover:bg-red-700"
+            >
+              Explore Memberships
+            </a>
+          </div>
+        </nav>
+      )}
     </header>
   )
 }
+
 
 function Hero() {
   return (
     <section
       id="home"
-      className="relative flex min-h-[620px] items-center overflow-hidden bg-zinc-950 px-6 py-24 text-white md:min-h-[700px] md:px-12 lg:px-20"
+      className="relative flex min-h-[680px] items-center overflow-hidden bg-zinc-950 px-5 py-24 text-white sm:px-8 md:min-h-[740px] lg:px-12"
     >
       <video
         className="absolute inset-0 h-full w-full object-cover"
@@ -49,111 +108,179 @@ function Hero() {
         <source src="/gymvid.mp4" type="video/mp4" />
       </video>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/25" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl">
-        <p className="mb-6 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.3em] text-red-400 sm:text-sm">
-          <span className="h-px w-10 bg-red-500" />
-          Your fitness. Your future.
-        </p>
+        <div className="max-w-4xl">
+          <p className="mb-6 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.25em] text-red-400 sm:text-sm sm:tracking-[0.3em]">
+            <span className="h-px w-8 shrink-0 bg-red-500 sm:w-10" />
+            Your fitness. Your future.
+          </p>
 
-        <h1 className="max-w-4xl text-5xl font-black leading-[0.98] tracking-tight sm:text-6xl md:text-8xl">
-          BUILT BY
-          <br />
-          <span className="text-red-500">DISCIPLINE.</span>
-          <br />
-          DEFINED BY YOU.
-        </h1>
+          <h1 className="max-w-4xl text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+            BUILT BY
+            <br />
+            <span className="text-red-500">DISCIPLINE.</span>
+            <br />
+            DEFINED BY YOU<span className="text-red-500">.</span>
+          </h1>
 
-        <p className="mt-7 max-w-xl text-base leading-7 text-gray-300 sm:text-lg">
-          Train with purpose. Build real strength. Become the strongest
-          version of yourself, one workout at a time.
-        </p>
+          <p className="mt-7 max-w-xl text-base leading-7 text-gray-200 sm:text-lg sm:leading-8">
+            Train with purpose. Build real strength. Become the strongest
+            version of yourself, one workout at a time.
+          </p>
 
-        <div className="mt-9 flex flex-wrap gap-4">
-          <a
-            href="#programs"
-            className="rounded-md bg-red-600 px-7 py-4 text-sm font-extrabold uppercase tracking-wide transition hover:bg-red-700"
-          >
-            Explore Programs <span aria-hidden="true">↗️</span>
-          </a>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+            <a
+              href="#programs"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-red-600 px-6 py-4 text-sm font-extrabold uppercase tracking-wide transition hover:bg-red-700"
+            >
+              Explore Programs <span aria-hidden="true">↗</span>
+            </a>
 
-          <a
-            href="#about"
-            className="rounded-md border border-white/40 px-7 py-4 text-sm font-bold uppercase tracking-wide transition hover:border-white hover:bg-white/10"
-          >
-            Discover Pulse
-          </a>
-        </div>
+            <a
+              href="#about"
+              className="inline-flex min-h-14 items-center justify-center rounded-md border border-white/40 bg-black/20 px-6 py-4 text-sm font-bold uppercase tracking-wide transition hover:border-white hover:bg-white/10"
+            >
+              Discover Pulse
+            </a>
+          </div>
 
-        <div className="mt-14 flex flex-wrap gap-x-10 gap-y-4 border-t border-white/20 pt-6 text-xs font-bold uppercase tracking-widest text-gray-300">
-          <span><span className="mr-2 text-red-500">✦</span> Train with purpose</span>
-          <span><span className="mr-2 text-red-500">✦</span> Progress with intent</span>
-          <span><span className="mr-2 text-red-500">✦</span> Own your journey</span>
+          <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/20 pt-5 text-[10px] font-bold uppercase tracking-widest text-gray-200 sm:gap-x-8 sm:text-xs">
+            <span><span className="mr-2 text-red-500">✦</span>Train with purpose</span>
+            <span><span className="mr-2 text-red-500">✦</span>Progress with intent</span>
+            <span><span className="mr-2 text-red-500">✦</span>Own your journey</span>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
+
+
 function Programs() {
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  const categories = [
+    'All',
+    ...new Set(programs.map((program) => program.category)),
+  ]
+
+  const filteredPrograms =
+    activeCategory === 'All'
+      ? programs
+      : programs.filter((program) => program.category === activeCategory)
+
   return (
-    <section id="programs" className="bg-zinc-950 px-6 py-24 text-white md:px-12 lg:px-20">
+    <section
+      id="programs"
+      className="bg-zinc-950 px-5 py-20 text-white sm:px-8 md:py-24 lg:px-12"
+    >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div className="mb-10 grid gap-5 md:grid-cols-2 md:items-end">
           <div>
-            <p className="mb-4 text-xs font-extrabold uppercase tracking-[0.3em] text-red-500">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.3em] text-red-500">
               Find your strength
             </p>
-            <h2 className="text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
               TRAIN YOUR WAY<span className="text-red-500">.</span>
             </h2>
           </div>
 
-          <p className="max-w-md leading-7 text-gray-400">
-            Every goal starts with a plan. Choose the training approach
-            that fits your ambitions and start moving forward.
+          <p className="max-w-lg leading-7 text-gray-400 md:justify-self-end">
+            Every goal starts with a plan. Choose the training approach that
+            fits your ambitions and start moving forward.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {programs.map((program, index) => (
+        <div
+          className="mb-8 flex flex-wrap gap-2"
+          aria-label="Filter programs by category"
+        >
+          {categories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setActiveCategory(category)}
+              aria-pressed={activeCategory === category}
+              className={`rounded-full border px-5 py-2.5 text-sm font-bold transition ${
+                activeCategory === category
+                  ? 'border-red-500 bg-red-600 text-white'
+                  : 'border-white/15 bg-white/5 text-gray-300 hover:border-red-500 hover:text-white'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredPrograms.map((program) => (
             <article
               key={program.id}
-              className="group flex min-h-64 flex-col border border-white/10 bg-zinc-900 p-7 transition duration-300 hover:-translate-y-1 hover:border-red-500/70 hover:bg-zinc-900/80 sm:p-8"
-            >
-              <div className="mb-9 flex items-center justify-between">
-                <span className="text-sm font-bold tracking-widest text-red-500">
-                  0{index + 1}
+              className="group relative flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 transition duration-300 hover:-translate-y-1 hover:border-red-500/70"
+               >
+                <div className="absolute inset-0">
+  <img
+    src={
+      program.category === 'Strength'
+        ? '/images/strength.jpg'
+        : program.category === 'Cardio'
+          ? '/images/cardio.jpg'
+          : '/images/personal-training.jpg'
+    }
+    alt={program.name}
+    className="h-full w-full object-cover opacity-40 transition duration-500 group-hover:scale-105 group-hover:opacity-55"
+  />
+  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10" />
+</div>
+              <div className="mb-8 flex items-center justify-between gap-3">
+                <span className="text-sm font-black tracking-widest text-red-500">
+                  {String(programs.indexOf(program) + 1).padStart(2, '0')}
                 </span>
+
                 <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-gray-300">
                   {program.category}
                 </span>
               </div>
 
-              <h3 className="mb-4 text-2xl font-extrabold">
+              <h3 className="mb-3 text-2xl font-black tracking-tight sm:text-3xl">
                 {program.name}
               </h3>
 
-              <p className="flex-1 leading-7 text-gray-400">
+              <p className="flex-1 text-sm leading-7 text-gray-400 sm:text-base">
                 {program.description}
               </p>
 
               <a
                 href="#contact"
-                className="mt-8 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold transition group-hover:text-red-400"
+                className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-sm font-bold transition group-hover:text-red-400"
               >
                 Find your program
-                <span className="text-xl transition group-hover:translate-x-1" aria-hidden="true">→</span>
+                <span
+                  className="text-xl transition group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  →
+                </span>
               </a>
             </article>
           ))}
         </div>
+
+        {filteredPrograms.length === 0 && (
+          <p className="rounded-lg border border-white/10 p-6 text-gray-400">
+            No programs found in this category.
+          </p>
+        )}
       </div>
     </section>
   )
 }
+
 
 
 function Trainers() {
@@ -178,11 +305,11 @@ function Trainers() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {trainers.map((trainer) => (
             <article
               key={trainer.id}
-              className="group border border-white/10 bg-zinc-900 p-7 transition duration-300 hover:-translate-y-1 hover:border-red-500 sm:p-8"
+              className="group flex h-full flex-col rounded-xl border border-white/10 bg-zinc-900/80 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-red-500 hover:shadow-red-500/10 sm:p-8"
             >
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-2xl font-black">
                 {trainer.name
@@ -203,11 +330,11 @@ function Trainers() {
                 {trainer.specialty}
               </p>
 
-              <p className="mt-4 text-sm leading-7 text-gray-400">
-                {trainer.description}
-              </p>
+            <p className="mt-4 flex-1 text-sm leading-7 text-gray-400">
+              {trainer.description}
+             </p>
 
-              <div className="mt-6 border-t border-white/10 pt-5">
+              <div className="mt-auto border-t border-white/10 pt-5">
                 <span className="text-sm font-bold text-white">
                   {trainer.experience} experience
                 </span>
