@@ -43,5 +43,4 @@ export const schedule = [
     trainer: "Alex Morgan",
     duration: 60,
     spots: 10,
-  },
-];
+  }]
