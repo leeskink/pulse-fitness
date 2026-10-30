@@ -1,577 +1,95 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useEffect, useState } from "react";
-
-const API_URL = "http://localhost:3000/api";
-
-function Icon({ name, size = 20 }) {
-  const paths = {
-    dashboard: (
-      <>
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      </>
-    ),
-    users: (
-      <>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="10" cy="7" r="4" />
-        <path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-      </>
-    ),
-    activity: (
-      <polyline points="3 12 7 12 10 4 14 20 17 12 21 12" />
-    ),
-    settings: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-2 .8l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-2-.8l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-2.2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 2-.8l.3-1.8h2.8l.3 1.8a8 8 0 0 1 2 .8l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 2.1Z" transform="translate(-1 -1) scale(1.08)" />
-      </>
-    ),
-    logout: (
-      <>
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </>
-    ),
-    search: (
-      <>
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-4-4" />
-      </>
-    ),
-    arrow: <polyline points="7 17 17 7 7 7" />,
-    calendar: (
-      <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M16 3v4M8 3v4M3 11h18" />
-      </>
-    ),
-  };
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
-
-function StatCard({ label, value, description, icon, accent }) {
-  return (
-    <article className="group rounded-2xl border border-white/[0.08] bg-[#111214] p-5 transition duration-200 hover:border-white/20 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-zinc-400">{label}</p>
-          <p className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            {value ?? "—"}
-          </p>
-        </div>
-
-        <div className={`rounded-xl p-3 ${accent}`}>
-          <Icon name={icon} size={21} />
-        </div>
-      </div>
-
-      <p className="mt-4 text-xs text-zinc-500">{description}</p>
-    </article>
-  );
-}
-
-function AdminDashboard() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
-  const [overview, setOverview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-
-  async function loadOverview() {
-    const response = await fetch(`${API_URL}/admin/overview`, {
-      credentials: "include",
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Unable to load the admin dashboard."
-      );
-    }
-
-    setOverview(data);
-  }
-
-  useEffect(() => {
-    async function checkAdminSession() {
-      try {
-        const response = await fetch(`${API_URL}/auth/me`, {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          await loadOverview();
-        }
-      } catch (err) {
-        setError(err.message || "Could not connect to the API.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    checkAdminSession();
-  }, []);
-
-  async function handleLogin(event) {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed.");
-      }
-
-      setUser(data.user);
-      setPassword("");
-      await loadOverview();
-    } catch (err) {
-      setOverview(null);
-      setError(err.message || "Unable to sign in.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleLogout() {
-    try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      setUser(null);
-      setOverview(null);
-      setPassword("");
-      setError("");
-      window.location.assign("/");
-    }
-  }
-
-  const recentUsers = (overview?.recentUsers || []).filter((member) => {
-    const term = search.trim().toLowerCase();
-
-    return (
-      (member.full_name || "").toLowerCase().includes(term) ||
-      (member.email || "").toLowerCase().includes(term) ||
-      (member.role || "").toLowerCase().includes(term)
-    );
+const API = "/api";
+const tabs = [
+  ["overview","Overview"],["trainers","Trainers"],["members","Members"],
+  ["schedule","Scheduling"],["pricing","Pricing & offers"],["admins","Administrators"]
+];
+const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const cls = {
+  panel:"rounded-2xl border border-white/10 bg-[#141619] shadow-xl shadow-black/10",
+  field:"w-full rounded-xl border border-white/10 bg-[#0b0d0f] px-3 py-2.5 text-sm text-white outline-none focus:border-red-500",
+  button:"rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-50",
+  secondary:"rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5"
+};
+async function api(path, options={}) {
+  const response = await fetch(`${API}${path}`, {
+    credentials:"include", ...options,
+    headers:{ ...(options.body ? {"Content-Type":"application/json"} : {}), ...(options.headers||{}) }
   });
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#090a0c] text-white">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-red-500" />
-          <p className="mt-5 text-sm text-zinc-400">
-            Loading your dashboard...
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!overview) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#090a0c] px-5 py-12 text-white">
-        <form
-          onSubmit={handleLogin}
-          className="w-full max-w-md rounded-3xl border border-white/10 bg-[#111214] p-7 shadow-2xl sm:p-9"
-        >
-          <a href="/" className="text-xl font-black tracking-tight">
-            PULSE<span className="text-red-500">.</span> FITNESS
-          </a>
-
-          <p className="mt-10 text-xs font-bold uppercase tracking-[0.22em] text-red-400">
-            Secure administrator access
-          </p>
-
-          <h1 className="mt-3 text-3xl font-bold tracking-tight">
-            Welcome back.
-          </h1>
-
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Sign in to manage your fitness platform.
-          </p>
-
-          {error && (
-            <p
-              role="alert"
-              className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"
-            >
-              {error}
-            </p>
-          )}
-
-          <label
-            htmlFor="admin-email"
-            className="mt-7 block text-sm font-medium text-zinc-300"
-          >
-            Email address
-          </label>
-          <input
-            id="admin-email"
-            type="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-red-500"
-            placeholder="admin@example.com"
-          />
-
-          <label
-            htmlFor="admin-password"
-            className="mt-5 block text-sm font-medium text-zinc-300"
-          >
-            Password
-          </label>
-          <input
-            id="admin-password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-red-500"
-            placeholder="Enter your password"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-7 w-full rounded-xl bg-red-600 px-5 py-3.5 font-semibold transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Sign in to dashboard
-          </button>
-
-          <a
-            href="/"
-            className="mt-6 block text-center text-sm text-zinc-500 transition hover:text-white"
-          >
-            ← Back to Pulse Fitness
-          </a>
-        </form>
-      </main>
-    );
-  }
-
-  const firstName = user?.fullName?.split(" ")[0] || "Admin";
-
-  return (
-    <main className="min-h-screen w-full overflow-x-hidden bg-[#090a0c] text-zinc-100">
-  <div className="flex min-h-screen w-full">
-        {/* Desktop sidebar */}
-        <aside className="hidden w-64 shrink-0 flex-col overflow-hidden border-r border-white/[0.07] bg-[#0d0e10] lg:flex">
-          <a href="/" className="flex items-center gap-3 px-6 py-7">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-lg font-black">
-              P
-            </span>
-            <span className="text-lg font-black tracking-tight">
-              PULSE<span className="text-red-500">.</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-                Fitness management
-              </span>
-            </span>
-          </a>
-
-          <div className="px-4 pt-7">
-            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
-              Workspace
-            </p>
-
-            <nav className="mt-4 space-y-1">
-              <a
-                href="#overview"
-                className="flex items-center gap-3 rounded-xl bg-red-500/10 px-3 py-3 text-sm font-semibold text-red-400"
-              >
-                <Icon name="dashboard" />
-                Dashboard
-              </a>
-              <a
-                href="#members"
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-400 transition hover:bg-white/[0.04] hover:text-white"
-              >
-                <Icon name="users" />
-                Recent members
-              </a>
-              <a
-                href="/"
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-400 transition hover:bg-white/[0.04] hover:text-white"
-              >
-                <Icon name="activity" />
-                View website
-                <span className="ml-auto text-zinc-600">↗</span>
-              </a>
-            </nav>
-          </div>
-
-          <div className="mt-auto p-4">
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
-              <p className="text-xs font-semibold text-zinc-300">
-                Pulse Fitness Admin
-              </p>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">
-                Manage your platform from one place.
-              </p>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-400 transition hover:bg-red-500/10 hover:text-red-400"
-            >
-              <Icon name="logout" />
-              Log out
-            </button>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <header className="sticky top-0 z-10 border-b border-white/[0.07] bg-[#090a0c]/95 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 font-black lg:hidden">
-                  P
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Admin workspace
-                  </p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    Pulse Fitness / Overview
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold text-white">
-                    {user?.fullName || "Administrator"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    Administrator
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-sm font-bold text-red-400">
-                  {firstName.charAt(0).toUpperCase()}
-                </div>
-                <button
-                  onClick={handleLogout}
-                  aria-label="Log out"
-                  title="Log out"
-                  className="rounded-lg border border-white/10 p-2.5 text-zinc-400 transition hover:border-red-500/40 hover:text-red-400 lg:hidden"
-                >
-                  <Icon name="logout" size={18} />
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <div className="mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 xl:px-12">
-            <section id="overview">
-              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
-                      Management overview
-                    </p>
-                  </div>
-                  <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                    Good to see you, {firstName}
-                    <span className="text-red-500">.</span>
-                  </h1>
-                  <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
-                    Here’s what’s happening with your Pulse Fitness platform.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 self-start rounded-xl border border-white/[0.08] bg-[#111214] px-4 py-3 text-xs text-zinc-400 sm:self-auto">
-                  <Icon name="calendar" size={16} />
-                  {new Date().toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                <StatCard
-                  label="Total accounts"
-                  value={overview.totalUsers}
-                  description="All registered accounts"
-                  icon="users"
-                  accent="bg-red-500/10 text-red-400"
-                />
-                <StatCard
-                  label="Members"
-                  value={overview.totalMembers}
-                  description="Accounts with the member role"
-                  icon="activity"
-                  accent="bg-emerald-500/10 text-emerald-400"
-                />
-                <StatCard
-                  label="Recent registrations"
-                  value={overview.recentUsers?.length ?? 0}
-                  description="Latest five accounts from your API"
-                  icon="arrow"
-                  accent="bg-sky-500/10 text-sky-400"
-                />
-              </div>
-            </section>
-
-            <section
-              id="members"
-              className="mt-8 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111214]"
-            >
-              <div className="flex flex-col gap-2 border-t border-white/[0.07] px-5 py-4 text-xs leading-5 text-zinc-500 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
-                <div>
-                  <h2 className="text-lg font-bold text-white">
-                    Recent registrations
-                  </h2>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    The latest accounts created on your platform
-                  </p>
-                </div>
-
-                <label className="relative block w-full sm:max-w-xs">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
-                    <Icon name="search" size={17} />
-                  </span>
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search name, email, role..."
-                    aria-label="Search recent registrations"
-                    className="w-full rounded-xl border border-white/10 bg-black/20 py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500/60"
-                  />
-                </label>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[650px] text-left text-sm">
-                  <thead className="bg-white/[0.02] text-[11px] uppercase tracking-[0.13em] text-zinc-500">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Member</th>
-                      <th className="px-6 py-4 font-semibold">Email address</th>
-                      <th className="px-6 py-4 font-semibold">Role</th>
-                      <th className="px-6 py-4 font-semibold">Date joined</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {recentUsers.map((member) => (
-                      <tr
-                        key={member.id}
-                        className="border-t border-white/[0.06] transition hover:bg-white/[0.02]"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-zinc-300">
-                              {(member.full_name || "?")
-                                .trim()
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                            <span className="font-medium text-zinc-200">
-                              {member.full_name || "Unnamed user"}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 text-zinc-400">
-                          {member.email}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                              member.role === "admin"
-                                ? "bg-red-500/10 text-red-400"
-                                : "bg-emerald-500/10 text-emerald-400"
-                            }`}
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                            {member.role || "member"}
-                          </span>
-                        </td>
-
-                        <td className="whitespace-nowrap px-6 py-4 text-zinc-500">
-                          {member.created_at
-                            ? new Date(member.created_at).toLocaleDateString()
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-
-                    {recentUsers.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-6 py-12 text-center text-sm text-zinc-500"
-                        >
-                          No matching registrations found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex flex-col gap-2 border-t border-white/[0.07] px-6 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-                <span>
-                  Showing {recentUsers.length} of{" "}
-                  {overview.recentUsers?.length ?? 0} recent accounts
-                </span>
-                <span>Data provided by your Pulse Fitness API</span>
-              </div>
-            </section>
-
-            <footer className="mt-8 flex flex-col gap-2 border-t border-white/[0.06] pt-5 text-xs text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
-              <span>© {new Date().getFullYear()} Pulse Fitness</span>
-              <span>Administrator workspace</span>
-            </footer>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+  const raw = await response.text();
+  let data={};
+  try { data=raw ? JSON.parse(raw) : {}; } catch { throw new Error(`Unexpected server response (${response.status}).`); }
+  if(!response.ok) throw new Error(data.message || `Request failed (${response.status}).`);
+  return data;
 }
+function Field({label,...props}) { return <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-400">{label}</span><input className={cls.field} {...props}/></label>; }
+function Select({label,children,...props}) { return <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-400">{label}</span><select className={cls.field} {...props}>{children}</select></label>; }
+function Textarea({label,...props}) { return <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-400">{label}</span><textarea className={cls.field} rows={3} {...props}/></label>; }
+function Stat({label,value,detail,icon}) { return <div className={`${cls.panel} p-5`}><div className="flex items-center justify-between"><p className="text-sm text-zinc-400">{label}</p><span className="rounded-xl bg-red-500/10 px-3 py-2 text-lg text-red-400">{icon}</span></div><p className="mt-4 text-3xl font-black">{value ?? "—"}</p><p className="mt-1 text-xs text-zinc-500">{detail}</p></div>; }
+function Empty({children}) { return <div className="py-12 text-center text-sm text-zinc-500">{children}</div>; }
 
-export default AdminDashboard;
+export default function AdminDashboard() {
+  const [tab,setTab]=useState("overview"), [user,setUser]=useState(null), [loading,setLoading]=useState(true);
+  const [busy,setBusy]=useState(false), [error,setError]=useState(""), [notice,setNotice]=useState("");
+  const [overview,setOverview]=useState({}), [trainers,setTrainers]=useState([]), [members,setMembers]=useState([]);
+  const [sessions,setSessions]=useState([]), [plans,setPlans]=useState([]), [promotions,setPromotions]=useState([]);
+  const [trainerForm,setTrainerForm]=useState({fullName:"",specialty:"",bio:"",email:"",phone:"",photoData:"",availability:[]});
+  const [editingTrainer,setEditingTrainer]=useState(null), [memberSearch,setMemberSearch]=useState("");
+  const [goalDrafts,setGoalDrafts]=useState({}), [sessionForm,setSessionForm]=useState({userId:"",trainerId:"",sessionDate:"",startTime:"09:00",endTime:"10:00",notes:""});
+  const [planForm,setPlanForm]=useState({name:"",description:"",price:"",durationDays:30});
+  const [promoForm,setPromoForm]=useState({title:"",code:"",discountPercent:"",startsAt:"",endsAt:""});
+  const [adminForm,setAdminForm]=useState({fullName:"",email:"",password:""});
+  const [login,setLogin]=useState({email:"",password:""});
+  const [showTrainerForm,setShowTrainerForm]=useState(false);
+
+  const refresh=useCallback(async()=>{
+    const [o,t,m,s,p]=await Promise.all([
+      api("/admin/overview"),api("/admin/trainers"),api("/admin/users"),api("/admin/sessions"),api("/admin/plans")
+    ]);
+    setOverview(o);setTrainers(t.trainers||[]);setMembers(m.users||[]);setSessions(s.sessions||[]);
+    setPlans(p.plans||[]);setPromotions(p.promotions||[]);
+    setGoalDrafts(Object.fromEntries((m.users||[]).map(x=>[x.id,{goals:x.goals||"",notes:x.notes||""}])));
+  },[]);
+  useEffect(()=>{(async()=>{try{const r=await api("/auth/me");if(r.user?.role!=="admin")throw new Error("This account does not have administrator access.");setUser(r.user);await refresh();}catch(e){setError(e.message);}finally{setLoading(false);}})();},[refresh]);
+  const flash=(msg)=>{setNotice(msg);setError("");};
+  async function act(fn,success){setBusy(true);setError("");setNotice("");try{await fn();if(success)flash(success);await refresh();}catch(e){setError(e.message);}finally{setBusy(false);}}
+  async function loginAdmin(e){e.preventDefault();await act(async()=>{const r=await api("/auth/login",{method:"POST",body:JSON.stringify(login)});if(r.user?.role!=="admin"){await api("/auth/logout",{method:"POST"});throw new Error("This account is not an administrator.");}setUser(r.user);setLogin({email:"",password:""});}, "Signed in successfully.");}
+  async function logout(){try{await api("/auth/logout",{method:"POST"});}finally{window.location.assign("/");}}
+  function updateAvailability(day,field,value){setTrainerForm(f=>{const existing=f.availability.find(a=>a.dayOfWeek===day)||{dayOfWeek:day,startTime:"09:00",endTime:"17:00"};const next={...existing,[field]:value};return {...f,availability:[...f.availability.filter(a=>a.dayOfWeek!==day),next]};});}
+  async function photoChanged(file){if(!file)return;if(file.size>5*1024*1024){setError("Trainer image must be smaller than 5 MB.");return;}const reader=new FileReader();reader.onload=()=>setTrainerForm(f=>({...f,photoData:reader.result}));reader.readAsDataURL(file);}
+  async function saveTrainer(e){e.preventDefault();await act(async()=>{const url=editingTrainer?`/admin/trainers/${editingTrainer}`:"/admin/trainers";await api(url,{method:editingTrainer?"PUT":"POST",body:JSON.stringify(trainerForm)});setTrainerForm({fullName:"",specialty:"",bio:"",email:"",phone:"",photoData:"",availability:[]});setEditingTrainer(null);setShowTrainerForm(false);},editingTrainer?"Trainer updated.":"Trainer added.");}
+  const filteredMembers=useMemo(()=>members.filter(m=>`${m.full_name} ${m.email} ${m.goals}`.toLowerCase().includes(memberSearch.toLowerCase())),[members,memberSearch]);
+  if(loading)return <main className="grid min-h-screen place-items-center bg-[#090b0d] text-white">Loading Pulse Fitness admin…</main>;
+  if(!user)return <main className="grid min-h-screen place-items-center bg-[#090b0d] px-4 text-white"><form onSubmit={loginAdmin} className={`${cls.panel} w-full max-w-md p-8`}><p className="text-xs font-black uppercase tracking-[.3em] text-red-500">Pulse Fitness / Admin</p><h1 className="mt-3 text-3xl font-black">Administrator sign in</h1><p className="mt-2 text-sm text-zinc-400">Sign in with an existing administrator account.</p>{error&&<p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}<div className="mt-6 space-y-4"><Field label="Email" type="email" required value={login.email} onChange={e=>setLogin({...login,email:e.target.value})}/><Field label="Password" type="password" required value={login.password} onChange={e=>setLogin({...login,password:e.target.value})}/><button disabled={busy} className={`${cls.button} w-full`}>Sign in to dashboard</button></div><a href="/" className="mt-5 block text-center text-sm text-zinc-500 hover:text-white">← Back to website</a></form></main>;
+
+  return <main className="min-h-screen bg-[#090b0d] text-zinc-100">
+    <div className="flex min-h-screen">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#101215] p-5 lg:flex">
+        <a href="/" className="text-xl font-black tracking-tight">PULSE<span className="text-red-500">.</span> FITNESS <span className="mt-1 block text-[10px] font-bold uppercase tracking-[.25em] text-zinc-500">Management suite</span></a>
+        <p className="mb-3 mt-10 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-zinc-600">Workspace</p>
+        <nav className="space-y-1">{tabs.map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${tab===id?"bg-red-600 text-white":"text-zinc-400 hover:bg-white/5 hover:text-white"}`}>{label}</button>)}</nav>
+        <div className="mt-auto border-t border-white/10 pt-5"><p className="text-sm font-semibold">{user.fullName}</p><p className="mt-1 text-xs text-zinc-500">{user.email}</p><button onClick={logout} className="mt-4 w-full rounded-xl border border-white/10 px-3 py-2.5 text-left text-sm text-zinc-300 hover:border-red-500/50 hover:text-red-300">↪ Log out</button></div>
+      </aside>
+      <section className="min-w-0 flex-1">
+        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#090b0d]/95 px-5 py-4 backdrop-blur-xl sm:px-8">
+          <div><p className="text-xs font-bold uppercase tracking-[.2em] text-red-400">Pulse Fitness / Administration</p><h1 className="mt-1 text-xl font-black sm:text-2xl">{tabs.find(x=>x[0]===tab)?.[1]}</h1></div>
+          <div className="flex items-center gap-2"><select value={tab} onChange={e=>setTab(e.target.value)} className={`${cls.field} max-w-44 lg:hidden`}>{tabs.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select><span className="hidden text-sm text-zinc-400 sm:inline">{user.fullName}</span><button onClick={logout} className={cls.secondary}>Log out</button></div>
+        </header>
+        <div className="mx-auto max-w-[1500px] space-y-6 p-4 sm:p-7">
+          {error&&<div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>}
+          {notice&&<div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">{notice}</div>}
+          {tab==="overview"&&<><div><p className="text-sm text-zinc-400">Your operations at a glance</p><h2 className="mt-1 text-3xl font-black">Welcome back, {user.fullName?.split(" ")[0]}.</h2></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Stat label="Total accounts" value={overview.totalUsers} detail="Registered website accounts" icon="◉"/><Stat label="Members" value={overview.totalMembers} detail="Active member accounts" icon="♙"/><Stat label="Active trainers" value={overview.totalTrainers} detail="Trainers on your team" icon="✦"/><Stat label="Upcoming sessions" value={overview.upcomingSessions} detail="Scheduled training sessions" icon="▦"/></div><div className={`${cls.panel} p-5`}><h3 className="text-lg font-bold">Quick actions</h3><div className="mt-4 flex flex-wrap gap-3">{[["trainers","Add a trainer"],["members","Manage members"],["schedule","Schedule a session"],["pricing","Create a promotion"]].map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={cls.secondary}>{label} →</button>)}</div></div></>}
+          {tab==="trainers"&&<><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-black">Trainer directory</h2><p className="mt-1 text-sm text-zinc-400">Profiles, photos and weekly availability.</p></div><button onClick={()=>{setEditingTrainer(null);setTrainerForm({fullName:"",specialty:"",bio:"",email:"",phone:"",photoData:"",availability:[]});setShowTrainerForm(!showTrainerForm);}} className={cls.button}>＋ Add trainer</button></div>
+            {showTrainerForm&&<form onSubmit={saveTrainer} className={`${cls.panel} space-y-4 p-5`}><h3 className="font-bold">{editingTrainer?"Edit trainer":"New trainer profile"}</h3><div className="grid gap-3 sm:grid-cols-2"><Field label="Full name" required value={trainerForm.fullName} onChange={e=>setTrainerForm({...trainerForm,fullName:e.target.value})}/><Field label="Specialty" value={trainerForm.specialty} onChange={e=>setTrainerForm({...trainerForm,specialty:e.target.value})}/><Field label="Email" type="email" value={trainerForm.email} onChange={e=>setTrainerForm({...trainerForm,email:e.target.value})}/><Field label="Phone" value={trainerForm.phone} onChange={e=>setTrainerForm({...trainerForm,phone:e.target.value})}/></div><Textarea label="Bio" value={trainerForm.bio} onChange={e=>setTrainerForm({...trainerForm,bio:e.target.value})}/><Field label="Trainer photo (max 5 MB)" type="file" accept="image/*" onChange={e=>photoChanged(e.target.files?.[0])}/>{trainerForm.photoData&&<img src={trainerForm.photoData} alt="Trainer preview" className="h-24 w-24 rounded-xl object-cover"/>}<div><p className="mb-2 text-sm font-semibold">Weekly availability</p><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{days.map((d,i)=><div key={d} className="flex items-center gap-2 rounded-xl border border-white/10 p-2"><input type="checkbox" checked={trainerForm.availability.some(a=>a.dayOfWeek===i)} onChange={e=>setTrainerForm(f=>({...f,availability:e.target.checked?[...f.availability,{dayOfWeek:i,startTime:"09:00",endTime:"17:00"}]:f.availability.filter(a=>a.dayOfWeek!==i)}))}/><span className="w-20 text-xs">{d}</span>{trainerForm.availability.some(a=>a.dayOfWeek===i)&&<><input aria-label={`${d} start`} type="time" value={trainerForm.availability.find(a=>a.dayOfWeek===i).startTime} onChange={e=>updateAvailability(i,"startTime",e.target.value)} className="min-w-0 bg-transparent text-xs"/><input aria-label={`${d} end`} type="time" value={trainerForm.availability.find(a=>a.dayOfWeek===i).endTime} onChange={e=>updateAvailability(i,"endTime",e.target.value)} className="min-w-0 bg-transparent text-xs"/></>}</div>)}</div></div><div className="flex gap-2"><button disabled={busy} className={cls.button}>Save trainer</button><button type="button" onClick={()=>setShowTrainerForm(false)} className={cls.secondary}>Cancel</button></div></form>}
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{trainers.map(t=><article key={t.id} className={`${cls.panel} overflow-hidden`}><div className="flex gap-4 p-4">{t.photo_data?<img src={t.photo_data} alt={t.full_name} className="h-24 w-24 rounded-xl object-cover"/>:<div className="grid h-24 w-24 place-items-center rounded-xl bg-zinc-800 text-3xl font-black text-red-400">{t.full_name?.[0]}</div>}<div className="min-w-0"><h3 className="font-bold">{t.full_name}</h3><p className="text-sm text-red-400">{t.specialty||"Fitness trainer"}</p><p className="mt-1 break-all text-xs text-zinc-500">{t.email}</p><span className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] ${t.active?"bg-emerald-500/10 text-emerald-300":"bg-zinc-700 text-zinc-300"}`}>{t.active?"Active":"Inactive"}</span></div></div><div className="border-t border-white/10 px-4 py-3"><p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">Availability</p><div className="flex flex-wrap gap-1">{(t.availability||[]).map(a=><span key={a.id} className="rounded-lg bg-white/5 px-2 py-1 text-[10px] text-zinc-300">{days[a.dayOfWeek]} {String(a.startTime).slice(0,5)}–{String(a.endTime).slice(0,5)}</span>)}{!t.availability?.length&&<span className="text-xs text-zinc-500">Not set</span>}</div><div className="mt-3 flex gap-2"><button className={cls.secondary} onClick={()=>{setEditingTrainer(t.id);setTrainerForm({fullName:t.full_name,specialty:t.specialty||"",bio:t.bio||"",email:t.email||"",phone:t.phone||"",photoData:t.photo_data||"",availability:(t.availability||[]).map(a=>({dayOfWeek:a.dayOfWeek,startTime:String(a.startTime).slice(0,5),endTime:String(a.endTime).slice(0,5)}))});setShowTrainerForm(true);window.scrollTo({top:0,behavior:"smooth"});}}>Edit</button><button className="rounded-xl border border-red-500/30 px-3 py-2 text-xs text-red-300" onClick={()=>{if(confirm(`Delete trainer ${t.full_name}?`))act(()=>api(`/admin/trainers/${t.id}`,{method:"DELETE"}),"Trainer deleted.");}}>Delete</button></div></div></article>)}</div>{!trainers.length&&<Empty>No trainers added yet.</Empty>}</>}
+          {tab==="members"&&<><div><h2 className="text-2xl font-black">Members & goals</h2><p className="mt-1 text-sm text-zinc-400">Review member profiles, update goals and manage accounts.</p></div><Field label="Search members" placeholder="Name, email or fitness goal…" value={memberSearch} onChange={e=>setMemberSearch(e.target.value)}/><div className={`${cls.panel} overflow-x-auto`}><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-white/5 text-xs uppercase text-zinc-500"><tr>{["Member","Email","Fitness goals","Notes","Actions"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{filteredMembers.filter(m=>m.role==="member").map(m=><tr key={m.id} className="border-t border-white/5"><td className="px-4 py-3 font-semibold">{m.full_name}</td><td className="px-4 py-3 text-zinc-400">{m.email}</td><td className="w-56 px-4 py-3"><textarea className={cls.field} value={goalDrafts[m.id]?.goals||""} onChange={e=>setGoalDrafts(d=>({...d,[m.id]:{...d[m.id],goals:e.target.value}}))} placeholder="e.g. Build strength"/></td><td className="w-48 px-4 py-3"><textarea className={cls.field} value={goalDrafts[m.id]?.notes||""} onChange={e=>setGoalDrafts(d=>({...d,[m.id]:{...d[m.id],notes:e.target.value}}))} placeholder="Admin notes"/></td><td className="whitespace-nowrap px-4 py-3"><button onClick={()=>act(()=>api(`/admin/users/${m.id}`,{method:"PUT",body:JSON.stringify(goalDrafts[m.id]||{})}),"Member profile saved.")} className="mr-2 text-xs text-emerald-300">Save</button><button onClick={()=>{if(confirm(`Delete member ${m.full_name}?`))act(()=>api(`/admin/users/${m.id}`,{method:"DELETE"}),"Member deleted.");}} className="text-xs text-red-300">Delete</button></td></tr>)}</tbody></table>{!filteredMembers.length&&<Empty>No matching members.</Empty>}</div></>}
+          {tab==="schedule"&&<><div><h2 className="text-2xl font-black">Training schedule</h2><p className="mt-1 text-sm text-zinc-400">Assign a member to an available trainer and time.</p></div><form onSubmit={async e=>{e.preventDefault();await act(()=>api("/admin/sessions",{method:"POST",body:JSON.stringify(sessionForm)}),"Training session scheduled.");setSessionForm(f=>({...f,notes:""}));}} className={`${cls.panel} grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3`}><Select label="Member" required value={sessionForm.userId} onChange={e=>setSessionForm({...sessionForm,userId:e.target.value})}><option value="">Choose member</option>{members.filter(m=>m.role==="member").map(m=><option key={m.id} value={m.id}>{m.full_name}</option>)}</Select><Select label="Trainer" required value={sessionForm.trainerId} onChange={e=>setSessionForm({...sessionForm,trainerId:e.target.value})}><option value="">Choose trainer</option>{trainers.filter(t=>t.active).map(t=><option key={t.id} value={t.id}>{t.full_name}</option>)}</Select><Field label="Date" type="date" required value={sessionForm.sessionDate} onChange={e=>setSessionForm({...sessionForm,sessionDate:e.target.value})}/><Field label="Start time" type="time" required value={sessionForm.startTime} onChange={e=>setSessionForm({...sessionForm,startTime:e.target.value})}/><Field label="End time" type="time" required value={sessionForm.endTime} onChange={e=>setSessionForm({...sessionForm,endTime:e.target.value})}/><Field label="Session notes" value={sessionForm.notes} onChange={e=>setSessionForm({...sessionForm,notes:e.target.value})}/><div className="sm:col-span-2 xl:col-span-3"><button disabled={busy} className={cls.button}>＋ Schedule session</button></div></form><div className={`${cls.panel} overflow-x-auto`}><table className="w-full min-w-[650px] text-sm"><thead className="bg-white/5 text-left text-xs uppercase text-zinc-500"><tr>{["Date","Time","Member","Trainer","Status","Update"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{sessions.map(s=><tr key={s.id} className="border-t border-white/5"><td className="px-4 py-3">{String(s.session_date).slice(0,10)}</td><td className="px-4 py-3">{String(s.start_time).slice(0,5)}–{String(s.end_time).slice(0,5)}</td><td className="px-4 py-3">{s.member_name}</td><td className="px-4 py-3">{s.trainer_name}</td><td className="px-4 py-3">{s.status}</td><td className="px-4 py-3"><select className="rounded-lg bg-[#0b0d0f] p-2" value={s.status} onChange={e=>act(()=>api(`/admin/sessions/${s.id}`,{method:"PATCH",body:JSON.stringify({status:e.target.value})}),"Session updated.")}><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></td></tr>)}</tbody></table>{!sessions.length&&<Empty>No sessions scheduled yet.</Empty>}</div></>}
+          {tab==="pricing"&&<><div><h2 className="text-2xl font-black">Memberships & promotions</h2><p className="mt-1 text-sm text-zinc-400">Create and manage prices and promotional offers.</p></div><div className="grid gap-5 xl:grid-cols-2"><form onSubmit={async e=>{e.preventDefault();await act(()=>api("/admin/plans",{method:"POST",body:JSON.stringify(planForm)}),"Membership plan created.");setPlanForm({name:"",description:"",price:"",durationDays:30});}} className={`${cls.panel} space-y-3 p-5`}><h3 className="font-bold">Create membership plan</h3><Field label="Plan name" required value={planForm.name} onChange={e=>setPlanForm({...planForm,name:e.target.value})}/><Textarea label="Description" value={planForm.description} onChange={e=>setPlanForm({...planForm,description:e.target.value})}/><div className="grid grid-cols-2 gap-3"><Field label="Price (AED)" type="number" min="0" step="0.01" required value={planForm.price} onChange={e=>setPlanForm({...planForm,price:e.target.value})}/><Field label="Duration (days)" type="number" min="1" required value={planForm.durationDays} onChange={e=>setPlanForm({...planForm,durationDays:e.target.value})}/></div><button className={cls.button}>Create plan</button></form><form onSubmit={async e=>{e.preventDefault();await act(()=>api("/admin/promotions",{method:"POST",body:JSON.stringify(promoForm)}),"Promotion created.");setPromoForm({title:"",code:"",discountPercent:"",startsAt:"",endsAt:""});}} className={`${cls.panel} space-y-3 p-5`}><h3 className="font-bold">Create promotion</h3><Field label="Promotion title" required value={promoForm.title} onChange={e=>setPromoForm({...promoForm,title:e.target.value})}/><Field label="Promo code" required value={promoForm.code} onChange={e=>setPromoForm({...promoForm,code:e.target.value.toUpperCase()})}/><Field label="Discount (%)" type="number" min="0" max="100" required value={promoForm.discountPercent} onChange={e=>setPromoForm({...promoForm,discountPercent:e.target.value})}/><div className="grid grid-cols-2 gap-3"><Field label="Start date" type="date" value={promoForm.startsAt} onChange={e=>setPromoForm({...promoForm,startsAt:e.target.value})}/><Field label="End date" type="date" value={promoForm.endsAt} onChange={e=>setPromoForm({...promoForm,endsAt:e.target.value})}/></div><button className={cls.button}>Create promotion</button></form></div><div className="grid gap-4 md:grid-cols-2"><div className={`${cls.panel} p-5`}><h3 className="font-bold">Membership plans</h3>{plans.map(p=><div key={p.id} className="flex items-center justify-between gap-3 border-b border-white/5 py-3"><div><p className="font-semibold">{p.name} · AED {p.price}</p><p className="text-xs text-zinc-500">{p.duration_days} days · {p.active?"Active":"Archived"}</p></div>{p.active&&<button onClick={()=>act(()=>api(`/admin/plans/${p.id}`,{method:"DELETE"}),"Plan archived.")} className="text-xs text-red-300">Archive</button>}</div>)}{!plans.length&&<Empty>No plans created.</Empty>}</div><div className={`${cls.panel} p-5`}><h3 className="font-bold">Promotions</h3>{promotions.map(p=><div key={p.id} className="flex items-center justify-between gap-3 border-b border-white/5 py-3"><div><p className="font-semibold">{p.title} · {p.discount_percent}%</p><p className="text-xs text-zinc-500">{p.code} · {p.active?"Active":"Inactive"}</p></div>{p.active&&<button onClick={()=>act(()=>api(`/admin/promotions/${p.id}`,{method:"DELETE"}),"Promotion deactivated.")} className="text-xs text-red-300">Deactivate</button>}</div>)}{!promotions.length&&<Empty>No promotions created.</Empty>}</div></div></>}
+          {tab==="admins"&&<><div><h2 className="text-2xl font-black">Administrator accounts</h2><p className="mt-1 text-sm text-zinc-400">Create another trusted administrator account.</p></div><form onSubmit={async e=>{e.preventDefault();await act(()=>api("/admin/admins",{method:"POST",body:JSON.stringify(adminForm)}),"Administrator account created.");setAdminForm({fullName:"",email:"",password:""});}} className={`${cls.panel} max-w-2xl space-y-4 p-5`}><Field label="Full name" required value={adminForm.fullName} onChange={e=>setAdminForm({...adminForm,fullName:e.target.value})}/><Field label="Email" type="email" required value={adminForm.email} onChange={e=>setAdminForm({...adminForm,email:e.target.value})}/><Field label="Temporary password (minimum 8 characters)" type="password" minLength={8} required value={adminForm.password} onChange={e=>setAdminForm({...adminForm,password:e.target.value})}/><button disabled={busy} className={cls.button}>＋ Create administrator</button><p className="text-xs text-zinc-500">Public sign-up never grants admin privileges. Only an authenticated administrator can create another admin.</p></form></>}
+          <footer className="border-t border-white/10 pt-5 text-xs text-zinc-600">© {new Date().getFullYear()} Pulse Fitness · Administration</footer>
+        </div>
+      </section>
+    </div>
+  </main>;
+}

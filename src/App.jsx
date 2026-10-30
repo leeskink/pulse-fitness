@@ -762,10 +762,9 @@ function App() {
     async function checkSession() {
       try {
         const response = await fetch(
-          "http://localhost:3000/api/auth/me",
-          { credentials: "include" }
-        );
-
+           "/api/auth/me",
+        { credentials: "include" }
+          );
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
