@@ -2,61 +2,137 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { programs } from "../data/programs";
 
-const API = "http://localhost:3000/api";
+const API = "/api";
 
-async function api(path, options = {}) {
-  const response = await fetch(`${API}${path}`, {
-    credentials: "include",
-    ...options,
-    headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...options.headers,
-    },
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || "Something went wrong.");
-  return data;
-}
-
-const dateLabel = (value) =>
-  new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString(
-    undefined,
-    { weekday: "short", day: "numeric", month: "short" }
-  );
-
-const timeLabel = (value) => String(value || "").slice(0, 5);
+const money = (value) =>
+  new Intl.NumberFormat("en-AE", {
+    style: "currency",
+    currency: "AED",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
 
 const today = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+const dateLabel = (value) =>
+  new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString(
+    undefined,
+    { weekday: "short", day: "numeric", month: "short", year: "numeric" }
+  );
+
+const timeLabel = (value) => String(value || "").slice(0, 5);
+
+const addMinutes = (time, minutes) => {
+  const [hours, mins] = time.split(":").map(Number);
+  const total = hours * 60 + mins + Number(minutes);
+  return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+};
+
+async function api(path, options = {}) {
+  let response;
+
+  try {
+    response = await fetch(`${API}${path}`, {
+      credentials: "include",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error(
+      "Cannot connect to Pulse Fitness. Check that the backend is running on port 3000."
+    );
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || `Request failed (${response.status}).`);
+  }
+
+  return data;
+}
+
+const initialForm = {
+  trainerId: "",
+  programName: "",
+  sessionDate: "",
+  startTime: "",
+  duration: "60",
+  notes: "",
+};
+
+const plansFallback = [
+  {
+    id: "starter",
+    name: "Starter",
+    description: "A flexible starting point for your fitness journey.",
+    price: 199,
+    duration_days: 30,
+    features: ["Gym floor access", "Locker room access", "Fitness assessment"],
+  },
+  {
+    id: "performance",
+    name: "Performance",
+    description: "For members ready to take their training further.",
+    price: 349,
+    duration_days: 30,
+    features: [
+      "Full gym access",
+      "Group fitness classes",
+      "Monthly progress review",
+      "Personal training consultation",
+    ],
+  },
+  {
+    id: "elite",
+    name: "Elite",
+    description: "A premium experience with personalized support.",
+    price: 599,
+    duration_days: 30,
+    features: [
+      "Full gym and class access",
+      "Two personal training sessions",
+      "Priority class booking",
+      "Monthly progress review",
+    ],
+  },
+];
+
+function SectionHeading({ number, label, title }) {
+  return (
+    <div className="mb-5">
+      <p className="text-[10px] font-black uppercase tracking-[.25em] text-red-500">
+        {number} / {label}
+      </p>
+      <h2 className="mt-2 text-2xl font-black sm:text-3xl">{title}</h2>
+    </div>
+  );
+}
+
 export default function MemberDashboard() {
   const [user, setUser] = useState(null);
   const [trainers, setTrainers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [orders, setOrders] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [payingPlan, setPayingPlan] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [form, setForm] = useState({
-    trainerId: "",
-    programName: "",
-    sessionDate: "",
-    startTime: "",
-    duration: "60",
-    notes: "",
-  });
+  const [form, setForm] = useState(initialForm);
 
   const load = useCallback(async () => {
-    const [me, trainerData, requestData, sessionData] = await Promise.all([
-      api("/auth/me"),
-      api("/member/trainers"),
-      api("/member/requests"),
-      api("/member/sessions"),
-    ]);
+    setError("");
+
+    const me = await api("/auth/me");
 
     if (me.user.role !== "member") {
       window.location.assign(me.user.role === "admin" ? "/admin" : "/");
@@ -64,14 +140,76 @@ export default function MemberDashboard() {
     }
 
     setUser(me.user);
-    setTrainers(trainerData.trainers || []);
-    setRequests(requestData.requests || []);
-    setSessions(sessionData.sessions || []);
+
+    const results = await Promise.allSettled([
+      api("/member/trainers"),
+      api("/member/requests"),
+      api("/member/sessions"),
+      api("/membership-plans"),
+      api("/orders"),
+    ]);
+
+    const [trainerResult, requestResult, sessionResult, planResult, orderResult] =
+      results;
+
+    const failures = [];
+
+    if (trainerResult.status === "fulfilled") {
+      setTrainers(trainerResult.value.trainers || []);
+    } else {
+      failures.push(`Trainers: ${trainerResult.reason.message}`);
+    }
+
+    if (requestResult.status === "fulfilled") {
+      setRequests(requestResult.value.requests || []);
+    } else {
+      failures.push(`Requests: ${requestResult.reason.message}`);
+    }
+
+    if (sessionResult.status === "fulfilled") {
+      setSessions(sessionResult.value.sessions || []);
+    } else {
+      failures.push(`Sessions: ${sessionResult.reason.message}`);
+    }
+
+    if (planResult.status === "fulfilled") {
+      setPlans(planResult.value.plans || []);
+    } else {
+      setPlans(plansFallback);
+      failures.push(`Membership plans: ${planResult.reason.message}`);
+    }
+
+    if (orderResult.status === "fulfilled") {
+      setOrders(orderResult.value.orders || []);
+    } else {
+      failures.push(`Payment history: ${orderResult.reason.message}`);
+    }
+
+    if (failures.length) {
+      setError(failures.join(" | "));
+    }
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("payment") === "success") {
+      setNotice(
+        "Thank you! Stripe has returned you to Pulse Fitness. Your payment confirmation will appear in your order history once verified."
+      );
+      window.history.replaceState({}, "", "/member");
+    } else if (params.get("payment") === "cancelled") {
+      setNotice("Your checkout was cancelled. You can choose a membership whenever you're ready.");
+      window.history.replaceState({}, "", "/member");
+    }
+
     load()
-      .catch((e) => setError(e.message))
+      .catch((e) => {
+        setError(e.message);
+        if (e.message.includes("Please log in")) {
+          window.location.assign("/");
+        }
+      })
       .finally(() => setLoading(false));
   }, [load]);
 
@@ -101,6 +239,37 @@ export default function MemberDashboard() {
     });
   }, [upcoming]);
 
+  async function chooseMembership(plan) {
+    setPayingPlan(plan.name);
+    setError("");
+    setNotice("");
+
+    try {
+      const result = await api("/checkout/create-session", {
+        method: "POST",
+        body: JSON.stringify({ planName: plan.name }),
+      });
+
+      if (!result.url) {
+        throw new Error("Stripe did not return a checkout URL.");
+      }
+
+      window.location.assign(result.url);
+    } catch (e) {
+      setError(e.message);
+      setPayingPlan("");
+    }
+  }
+
+  async function refreshDashboard() {
+    try {
+      await load();
+      setNotice("Your dashboard has been refreshed.");
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function submitRequest(event) {
     event.preventDefault();
     setSaving(true);
@@ -108,20 +277,26 @@ export default function MemberDashboard() {
     setNotice("");
 
     try {
+      const endTime = addMinutes(form.startTime, form.duration);
+
+      if (endTime <= form.startTime) {
+        throw new Error("The selected session time is invalid.");
+      }
+
       const result = await api("/member/requests", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          trainerId: form.trainerId,
+          programName: form.programName,
+          sessionDate: form.sessionDate,
+          startTime: form.startTime,
+          endTime,
+          notes: form.notes,
+        }),
       });
 
-      setNotice(result.message || "Your request has been sent to the team.");
-      setForm({
-        trainerId: "",
-        programName: "",
-        sessionDate: "",
-        startTime: "",
-        duration: "60",
-        notes: "",
-      });
+      setNotice(result.message || "Your training request has been submitted.");
+      setForm(initialForm);
       await load();
     } catch (e) {
       setError(e.message);
@@ -131,8 +306,11 @@ export default function MemberDashboard() {
   }
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
-    window.location.assign("/");
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } finally {
+      window.location.assign("/");
+    }
   }
 
   if (loading) {
@@ -153,6 +331,7 @@ export default function MemberDashboard() {
               Member portal
             </span>
           </a>
+
           <div className="flex items-center gap-4">
             <span className="hidden text-sm text-zinc-400 sm:block">
               {user?.fullName}
@@ -174,14 +353,14 @@ export default function MemberDashboard() {
               Your training starts here
             </p>
             <h1 className="mt-3 text-4xl font-black sm:text-5xl">
-              Welcome, {user?.fullName?.split(" ")[0]}.
+              Welcome, {user?.fullName?.split(" ")[0] || "Member"}.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">
-              Meet your coaches, choose a programme and request the training
-              time that works for you. Your booking is confirmed once approved
-              by the Pulse team.
+              Manage your membership, meet your coaches, choose a programme
+              and request the training time that works for you.
             </p>
           </div>
+
           <div className="border border-white/10 bg-[#141619] px-6 py-4">
             <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
               Confirmed this week
@@ -191,25 +370,162 @@ export default function MemberDashboard() {
         </div>
 
         {error && (
-          <p className="mb-5 border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          <div
+            role="alert"
+            className="mb-5 border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200"
+          >
             {error}
-          </p>
-        )}
-        {notice && (
-          <p className="mb-5 border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-            {notice}
-          </p>
+          </div>
         )}
 
-        <section className="mb-10">
-          <div className="mb-5">
-            <p className="text-[10px] font-black uppercase tracking-[.25em] text-red-500">
-              01 / Your coaching team
-            </p>
-            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-              Meet your trainers.
-            </h2>
+        {notice && (
+          <div
+            role="status"
+            className="mb-5 border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200"
+          >
+            {notice}
           </div>
+        )}
+
+        <section className="mb-12">
+          <SectionHeading
+            number="01"
+            label="Membership"
+            title="Choose your membership."
+          />
+
+          <p className="mb-6 max-w-2xl text-sm leading-6 text-zinc-400">
+            Choose the membership that fits your goals. Select a plan to
+            continue to secure Stripe Checkout.
+          </p>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {plans.map((plan) => (
+              <article
+                key={plan.id}
+                className={`relative flex flex-col border bg-[#111318] p-6 ${
+                  plan.name === "Performance"
+                    ? "border-red-500"
+                    : "border-white/10"
+                }`}
+              >
+                {plan.name === "Performance" && (
+                  <span className="absolute right-4 top-4 bg-red-600 px-3 py-1 text-[9px] font-black uppercase tracking-widest">
+                    Popular
+                  </span>
+                )}
+
+                <p className="text-xs font-black uppercase tracking-widest text-red-400">
+                  {plan.name}
+                </p>
+
+                <p className="mt-4 text-4xl font-black">
+                  {money(plan.price)}
+                  <span className="ml-1 text-sm font-medium text-zinc-500">
+                    / {Number(plan.duration_days || 30)} days
+                  </span>
+                </p>
+
+                <p className="mt-4 min-h-12 text-sm leading-6 text-zinc-400">
+                  {plan.description}
+                </p>
+
+                <div className="my-6 h-px bg-white/10" />
+
+                <ul className="mb-7 flex-1 space-y-3 text-sm text-zinc-300">
+                  {(plan.features || [
+                    "Gym access",
+                    "Member portal access",
+                    "Fitness support",
+                  ]).map((feature, index) => (
+                    <li key={index} className="flex gap-2">
+                      <span className="text-red-500">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => chooseMembership(plan)}
+                  disabled={Boolean(payingPlan)}
+                  className="w-full bg-red-600 px-5 py-4 text-xs font-black uppercase tracking-widest transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {payingPlan === plan.name
+                    ? "CONNECTING TO STRIPE..."
+                    : "CHOOSE MEMBERSHIP ↗"}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading
+            number="02"
+            label="Payment history"
+            title="Your payments."
+          />
+
+          {orders.length ? (
+            <div className="overflow-x-auto border border-white/10">
+              <table className="w-full min-w-[600px] text-left text-sm">
+                <thead className="bg-[#17191e] text-[10px] uppercase tracking-widest text-zinc-500">
+                  <tr>
+                    <th className="p-4">Membership</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id} className="border-t border-white/10">
+                      <td className="p-4 font-bold">{order.plan_name}</td>
+                      <td className="p-4">
+                        {money(Number(order.amount_cents) / 100)}
+                      </td>
+                      <td className="p-4 text-zinc-400">
+                        {dateLabel(order.created_at)}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-block px-3 py-1 text-[10px] font-black uppercase ${
+                            order.status === "paid"
+                              ? "bg-emerald-500/10 text-emerald-300"
+                              : order.status === "pending"
+                                ? "bg-amber-500/10 text-amber-300"
+                                : "bg-red-500/10 text-red-300"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="border border-white/10 bg-[#111318] p-6 text-sm text-zinc-400">
+              You have no payments yet. Your membership purchases will appear
+              here.
+            </div>
+          )}
+
+          <button
+            onClick={refreshDashboard}
+            className="mt-4 border border-white/15 px-5 py-3 text-[10px] font-black uppercase tracking-widest hover:border-red-500"
+          >
+            Refresh payment history
+          </button>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading
+            number="03"
+            label="Your coaching team"
+            title="Meet your trainers."
+          />
 
           {trainers.length === 0 ? (
             <div className="border border-white/10 bg-[#111318] p-6 text-sm text-zinc-400">
@@ -220,7 +536,7 @@ export default function MemberDashboard() {
               {trainers.map((trainer) => (
                 <article
                   key={trainer.id}
-                  className="overflow-hidden rounded-xl border border-white/10 bg-[#111318] transition hover:-translate-y-1 hover:border-red-500/50"
+                  className="overflow-hidden rounded-xl border border-white/10 bg-[#111318]"
                 >
                   {trainer.photo_data ? (
                     <img
@@ -233,6 +549,7 @@ export default function MemberDashboard() {
                       {trainer.full_name?.charAt(0)}
                     </div>
                   )}
+
                   <div className="p-5">
                     <p className="text-xs font-bold uppercase tracking-widest text-red-400">
                       {trainer.specialty || "Fitness coach"}
@@ -265,13 +582,15 @@ export default function MemberDashboard() {
           )}
         </section>
 
-        <div className="grid gap-7 xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-7 xl:grid-cols-2">
           <section className="rounded-xl border border-white/10 bg-[#111318] p-5 sm:p-7">
-            <p className="text-[10px] font-black uppercase tracking-[.25em] text-red-500">
-              02 / Request a session
-            </p>
-            <h2 className="mt-2 text-2xl font-black">Build your next session.</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
+            <SectionHeading
+              number="04"
+              label="Request a session"
+              title="Build your next session."
+            />
+
+            <p className="text-sm leading-6 text-zinc-400">
               Select a programme, coach and preferred time. The admin team will
               approve or suggest a new time.
             </p>
@@ -329,6 +648,7 @@ export default function MemberDashboard() {
                     className="mt-2 w-full border border-white/10 bg-black px-4 py-3 text-sm text-white"
                   />
                 </label>
+
                 <label className="block text-xs font-bold text-zinc-300">
                   Preferred start time
                   <input
@@ -384,11 +704,13 @@ export default function MemberDashboard() {
 
           <div className="space-y-7">
             <section className="rounded-xl border border-white/10 bg-[#111318] p-5 sm:p-7">
-              <p className="text-[10px] font-black uppercase tracking-[.25em] text-red-500">
-                03 / Your week
-              </p>
-              <h2 className="mt-2 text-2xl font-black">Upcoming schedule.</h2>
-              <p className="mt-2 text-sm text-zinc-400">
+              <SectionHeading
+                number="05"
+                label="Your week"
+                title="Upcoming schedule."
+              />
+
+              <p className="text-sm text-zinc-400">
                 Your confirmed sessions for this week.
               </p>
 
@@ -399,16 +721,11 @@ export default function MemberDashboard() {
                       key={s.id}
                       className="border border-white/10 bg-black/30 p-4"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-bold">{dateLabel(s.session_date)}</p>
-                        <span className="border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[9px] font-black uppercase text-emerald-300">
-                          Confirmed
-                        </span>
-                      </div>
+                      <p className="font-bold">{dateLabel(s.session_date)}</p>
                       <p className="mt-2 text-sm text-zinc-300">
                         {timeLabel(s.start_time)} – {timeLabel(s.end_time)}
                       </p>
-                      <p className="mt-2 font-bold text-white">
+                      <p className="mt-2 font-bold">
                         {s.program_name || "Training session"}
                       </p>
                       <p className="mt-1 text-xs text-zinc-400">
@@ -419,7 +736,9 @@ export default function MemberDashboard() {
                 </div>
               ) : (
                 <div className="mt-5 border border-dashed border-white/15 p-6 text-center">
-                  <p className="text-sm font-bold">No confirmed sessions this week</p>
+                  <p className="text-sm font-bold">
+                    No confirmed sessions this week
+                  </p>
                   <p className="mt-2 text-xs leading-6 text-zinc-500">
                     Once your request is approved, your sessions will appear here.
                   </p>
@@ -428,13 +747,14 @@ export default function MemberDashboard() {
             </section>
 
             <section className="rounded-xl border border-white/10 bg-[#111318] p-5 sm:p-7">
-              <p className="text-[10px] font-black uppercase tracking-[.25em] text-red-500">
-                04 / Booking updates
-              </p>
-              <h2 className="mt-2 text-2xl font-black">My requests.</h2>
+              <SectionHeading
+                number="06"
+                label="Booking updates"
+                title="My requests."
+              />
 
               {requests.length ? (
-                <div className="mt-5 space-y-3">
+                <div className="space-y-3">
                   {requests.map((r) => (
                     <article
                       key={r.id}
@@ -442,15 +762,7 @@ export default function MemberDashboard() {
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-bold">{r.program_name}</p>
-                        <span className={`border px-3 py-1 text-[9px] font-black uppercase ${
-                          r.status === "approved"
-                            ? "border-emerald-500/30 text-emerald-300"
-                            : r.status === "rescheduled"
-                            ? "border-blue-500/30 text-blue-300"
-                            : r.status === "declined"
-                            ? "border-red-500/30 text-red-300"
-                            : "border-amber-500/30 text-amber-300"
-                        }`}>
+                        <span className="border border-white/15 px-3 py-1 text-[9px] font-black uppercase">
                           {r.status}
                         </span>
                       </div>
@@ -458,27 +770,22 @@ export default function MemberDashboard() {
                         Coach: {r.trainer_name}
                       </p>
                       <p className="mt-1 text-xs text-zinc-300">
-                        Requested: {dateLabel(r.requested_date)} at {timeLabel(r.requested_time)}
+                        Requested: {dateLabel(r.requested_date)} at{" "}
+                        {timeLabel(r.requested_start_time)}
                       </p>
-                      {r.admin_message && (
+                      {r.admin_note && (
                         <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-6 text-zinc-300">
-                          Team update: {r.admin_message}
+                          Team update: {r.admin_note}
                         </p>
                       )}
                     </article>
                   ))}
                 </div>
               ) : (
-                <p className="mt-4 text-sm text-zinc-500">
+                <p className="text-sm text-zinc-500">
                   You haven't submitted a training request yet.
                 </p>
               )}
-              <button
-                onClick={() => load().catch((e) => setError(e.message))}
-                className="mt-5 w-full border border-white/15 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:border-red-500"
-              >
-                Refresh my dashboard
-              </button>
             </section>
           </div>
         </div>
